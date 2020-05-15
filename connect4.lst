@@ -1,0 +1,1560 @@
+   1 0000               # File Name: connect4.asm
+   2 0000               #
+   3 0000               # Author: Joshua McFadden
+   4 0000               #
+   5 0000               # Description:
+   6 0000               #
+   7 0000               #
+   8 0000               #
+   9 0000               #
+  10 0000               
+  11 0000               #
+  12 0000               # Name: Constant definitions
+  13 0000               #
+  14 0000               # Description:	These consts define values used for system calls,
+  15 0000               #					and some other misc values
+  16 0000               #
+  17 0000               
+  18 0000               # Constants for system calls and other things
+  19 0000               
+  20 0000               PRINT_INT		= 1		# code for syscall to print an int
+  21 0000               PRINT_STRING	= 4		# code for syscall to print a string
+  22 0000               READ_INT		= 5		# code for syscall to read an int
+  23 0000               A_FRAMESIZE 	= 48	# Stack size
+  24 0000               
+  25 0000               
+  26 0000               #
+  27 0000               # Name: Data Area
+  28 0000               #
+  29 0000               # Description:	A large prtion of the data for the program is stored here
+  30 0000               #					each area or item has a specific lable attached to it.
+  31 0000               #					For many in this area they are strings to be printed
+  32 0000               #					just by loading it as some may need to be called multiple
+  33 0000               #					times. There are ints stored here and those are explained
+  34 0000               #					below.
+  35 0000               
+  36 0000               .data
+  37 0000               .align 2
+  38 0000               
+  39 0000               #------------Welcome Message------------#
+  40 0000               welcome:
+  41 0000 2020202A	.ascii "   ************************\n"
+          2A2A2A2A
+          2A2A2A2A
+          2A2A2A2A
+          2A2A2A2A
+          2A2A2A2A
+  42 001c 2020202A	.ascii "   **    Connect Four    **\n"
+          2A202020
+          20436F6E
+          6E656374
+          20466F75
+          72202020
+  43 0038 2020202A	.asciiz "   ************************\n\n"
+          2A2A2A2A
+          2A2A2A2A
+          2A2A2A2A
+          2A2A2A2A
+          2A2A2A2A
+  44 0056               
+  45 0056               #-------------Initial Board-------------#
+  46 0056               board:
+  47 0056 20202030	.ascii  "   0   1   2   3   4   5   6\n"
+          20202031
+          20202032
+          20202033
+          20202034
+          20202035
+  48 0073 2B2D2D2D	.ascii  "+-----------------------------+\n"
+          2D2D2D2D
+          2D2D2D2D
+          2D2D2D2D
+          2D2D2D2D
+          2D2D2D2D
+  49 0093 7C2B2D2D	.ascii  "|+---+---+---+---+---+---+---+|\n"
+          2D2B2D2D
+          2D2B2D2D
+          2D2B2D2D
+          2D2B2D2D
+          2D2B2D2D
+  50 00b3 7C7C2020	.ascii  "||   |   |   |   |   |   |   ||\n"
+          207C2020
+          207C2020
+          207C2020
+          207C2020
+          207C2020
+  51 00d3 7C2B2D2D	.ascii  "|+---+---+---+---+---+---+---+|\n"
+          2D2B2D2D
+          2D2B2D2D
+          2D2B2D2D
+          2D2B2D2D
+          2D2B2D2D
+  52 00f3 7C7C2020	.ascii  "||   |   |   |   |   |   |   ||\n"
+          207C2020
+          207C2020
+          207C2020
+          207C2020
+          207C2020
+  53 0113 7C2B2D2D	.ascii  "|+---+---+---+---+---+---+---+|\n"
+          2D2B2D2D
+          2D2B2D2D
+          2D2B2D2D
+          2D2B2D2D
+          2D2B2D2D
+  54 0133 7C7C2020	.ascii  "||   |   |   |   |   |   |   ||\n"
+          207C2020
+          207C2020
+          207C2020
+          207C2020
+          207C2020
+  55 0153 7C2B2D2D	.ascii  "|+---+---+---+---+---+---+---+|\n"
+          2D2B2D2D
+          2D2B2D2D
+          2D2B2D2D
+          2D2B2D2D
+          2D2B2D2D
+  56 0173 7C7C2020	.ascii  "||   |   |   |   |   |   |   ||\n"
+          207C2020
+          207C2020
+          207C2020
+          207C2020
+          207C2020
+  57 0193 7C2B2D2D	.ascii  "|+---+---+---+---+---+---+---+|\n"
+          2D2B2D2D
+          2D2B2D2D
+          2D2B2D2D
+          2D2B2D2D
+          2D2B2D2D
+  58 01b3 7C7C2020	.ascii  "||   |   |   |   |   |   |   ||\n"
+          207C2020
+          207C2020
+          207C2020
+          207C2020
+          207C2020
+  59 01d3 7C2B2D2D	.ascii  "|+---+---+---+---+---+---+---+|\n"
+          2D2B2D2D
+          2D2B2D2D
+          2D2B2D2D
+          2D2B2D2D
+          2D2B2D2D
+  60 01f3 7C7C2020	.ascii  "||   |   |   |   |   |   |   ||\n"
+          207C2020
+          207C2020
+          207C2020
+          207C2020
+          207C2020
+  61 0213 7C2B2D2D	.ascii  "|+---+---+---+---+---+---+---+|\n"
+          2D2B2D2D
+          2D2B2D2D
+          2D2B2D2D
+          2D2B2D2D
+          2D2B2D2D
+  62 0233 2B2D2D2D	.ascii  "+-----------------------------+\n"
+          2D2D2D2D
+          2D2D2D2D
+          2D2D2D2D
+          2D2D2D2D
+          2D2D2D2D
+  63 0253 20202030	.asciiz "   0   1   2   3   4   5   6"
+          20202031
+          20202032
+          20202033
+          20202034
+          20202035
+  64 0270               
+  65 0270               space:
+  66 0270 0A00    	.asciiz "\n"
+  67 0272               
+  68 0272               #-----------Player 1 Movemen--t---------#
+  69 0272               player1:
+  70 0272 506C6179	.asciiz "Player 1: select a row to place your coin (0-6 or -1 to quit):"
+          65722031
+          3A207365
+          6C656374
+          20612072
+          6F772074
+  71 02b1               
+  72 02b1               #-----------Player 2 Movement-----------#
+  73 02b1               player2:
+  74 02b1 506C6179	.asciiz "Player 2: select a row to place your coin (0-6 or -1 to quit):"
+          65722032
+          3A207365
+          6C656374
+          20612072
+          6F772074
+  75 02f0               
+  76 02f0               #----------------Token------------------#
+  77 02f0               token_1:
+  78 02f0 58      	.ascii "X"
+  79 02f1               
+  80 02f1               token_2:
+  81 02f1 4F      	.ascii "O"
+  82 02f2               
+  83 02f2               token_3:
+  84 02f2 20      	.ascii " "
+  85 02f3               
+  86 02f3               #------------Illegal Movement-----------#
+  87 02f3               illegal_num:
+  88 02f3 496C6C65	.asciiz "Illegal column number."
+          67616C20
+          636F6C75
+          6D6E206E
+          756D6265
+          722E00  
+  89 030a               illegal_total:
+  90 030a 496C6C65	.asciiz "Illegal move, no more room in that column."
+          67616C20
+          6D6F7665
+          2C206E6F
+          206D6F72
+          6520726F
+  91 0335               
+  92 0335               #----------------Victory----------------#
+  93 0335               victory_1:
+  94 0335 0A506C61	.asciiz "\nPlayer 1 wins!\n"
+          79657220
+          31207769
+          6E73210A
+          00      
+  95 0346               victory_2:
+  96 0346 0A506C61	.asciiz "\nPlayer 2 wins!\n"
+          79657220
+          32207769
+          6E73210A
+          00      
+  97 0357               victory_t:
+  98 0357 0A546865	.asciiz "\nThe game ends in a tie.\n"
+          2067616D
+          6520656E
+          64732069
+          6E206120
+          7469652E
+  99 0371               
+ 100 0371               #----------------Exit-------------------#
+ 101 0371               quit_1:
+ 102 0371 506C6179	.asciiz "Player 1 quit.\n"
+          65722031
+          20717569
+          742E0A00
+ 103 0381               quit_2:
+ 104 0381 506C6179	.asciiz "Player 2 quit.\n"
+          65722032
+          20717569
+          742E0A00
+ 105 0391               
+ 106 0391               #----------------Place------------------#
+ 107 0391               # These are the locations in memeory where
+ 108 0391               #	each row and column starts. To find a
+ 109 0391               #	specific row you multiply the input by 4
+ 110 0391               #	and add it to the location in memeory of
+ 111 0391               #	the row label. Simmiar thing is done for 
+ 112 0391               #	the columns, each is the start of the line.
+ 113 0391               
+ 114 0391 000000  	.align 2
+ 115 0394               
+ 116 0394               column:
+ 117 0394 00000004	.word 4, 8, 12, 16, 20, 24, 28
+     0398 00000008
+     039c 0000000C
+     03a0 00000010
+     03a4 00000014
+     03a8 00000018
+ 118 03b0               row:
+ 119 03b0 0000019C	.word 412, 348, 284, 220, 156, 92
+     03b4 0000015C
+     03b8 0000011C
+     03bc 000000DC
+     03c0 0000009C
+     03c4 0000005C
+ 120 03c8               loop_count:
+ 121 03c8 00000004	.word 4, 5, 6, 6, 5, 4
+     03cc 00000005
+     03d0 00000006
+     03d4 00000006
+     03d8 00000005
+     03dc 00000004
+ 122 03e0               
+ 123 0000               .text
+ 124 0000               
+ 125 0000               # End of general values that need to be used. Beginning of code.
+ 126 0000               
+ 127 0000               
+ 128 0000               #
+ 129 0000               # Name:		Main
+ 130 0000               #
+ 131 0000               # Description:
+ 132 0000               #
+ 133 0000               
+ 134 0000               main:
+ 135 0000               
+ 136 0000 34020004		li	$v0, PRINT_STRING		# Prints the welcoming message to the user
+ 137 0004 3C040000		la	$a0, welcome
+     0008 34840000
+ 138 000c 0000000C		syscall
+ 139 0010               
+ 140 0010 34020004		li	$v0, PRINT_STRING		# Prints a clean board to the user
+ 141 0014 3C040000		la	$a0, board
+     0018 34840000
+ 142 001c 0000000C		syscall
+ 143 0020               
+ 144 0020 34020004		li	$v0, PRINT_STRING
+ 145 0024 3C040000		la	$a0, space
+     0028 34840000
+ 146 002c 0000000C		syscall
+ 147 0030               
+ 148 0030               game_loop:
+ 149 0030               
+ 150 0030 34050001		li	$a1, 1					# Set player 1
+ 151 0034 0C000024		jal	input					# Get player 1's input
+ 152 0038               
+ 153 0038 34050001		li	$a1, 1					# Make sure a1 is still 1
+ 154 003c 0C0000E0		jal	win_h					# Check win for horizontal
+ 155 0040 34050001		li	$a1, 1
+ 156 0044 0C000128		jal	win_v					# Check win for vertical
+ 157 0048 34050001		li	$a1, 1
+ 158 004c 0C000179		jal win_d					# Check win for diagonal
+ 159 0050 34050001		li	$a1, 1
+ 160 0054 0C00024F		jal	win_t
+ 161 0058               
+ 162 0058 34050002		li	$a1, 2					# Set player 2
+ 163 005c 0C000024		jal	input					# Get player2's input
+ 164 0060               
+ 165 0060 34050002		li	$a1, 2					# See above
+ 166 0064 0C0000E0		jal	win_h
+ 167 0068 34050002		li	$a1, 2
+ 168 006c 0C000128		jal	win_v
+ 169 0070 34050002		li	$a1, 2
+ 170 0074 0C000179		jal	win_d
+ 171 0078 34050002		li	$a1, 2
+ 172 007c 0C00024F		jal	win_t
+ 173 0080               
+ 174 0080 0800000C		j	game_loop				# Loop until user quits or wins
+ 175 0084               
+ 176 0084 08000022		j	exit					# just incase
+ 177 0088               
+ 178 0088               
+ 179 0088               #
+ 180 0088               # Name: exit
+ 181 0088               #
+ 182 0088               # Description: Closes the program
+ 183 0088               #
+ 184 0088               
+ 185 0088               exit:
+ 186 0088               
+ 187 0088 3402000A		li	$v0, 10
+ 188 008c 0000000C		syscall
+ 189 0090               
+ 190 0090               
+ 191 0090               #
+ 192 0090               # Name:		input
+ 193 0090               #
+ 194 0090               # Description: This takes the input from the players as well as checking user
+ 195 0090               #					input. It calls top_error to check the top row. It also
+ 196 0090               #					upadtes the baord bassed off of user input.
+ 197 0090               #
+ 198 0090               
+ 199 0090               input:
+ 200 0090               #
+ 201 0090               # Save registers ra and s0 - s7 on the stack.
+ 202 0090               #
+ 203 0090 2408FFD0		li	$t0, -A_FRAMESIZE
+ 204 0094 03A8E820	    add $sp, $sp, $t0
+ 205 0098 AFBF002C	    sw  $ra, -4+A_FRAMESIZE($sp)
+ 206 009c AFB70028	    sw  $s7, 40($sp)
+ 207 00a0 AFB60024	    sw  $s6, 36($sp)
+ 208 00a4 AFB50020	    sw  $s5, 32($sp)
+ 209 00a8 AFA4001C	    sw  $a0, 28($sp)
+ 210 00ac AFA50018	    sw  $a1, 24($sp)
+ 211 00b0 AFA60014	    sw  $a2, 20($sp)
+ 212 00b4 AFB40010	    sw  $s4, 16($sp)
+ 213 00b8 AFB3000C	    sw  $s3, 12($sp)
+ 214 00bc AFB20008		sw  $s2, 8($sp)
+ 215 00c0 AFB10004		sw 	$s1, 4($sp)
+ 216 00c4 AFB00000		sw	$s0, 0($sp)
+ 217 00c8               
+ 218 00c8               
+ 219 00c8 00A0B821		move $s7, $a1				# User provides what player is being used
+ 220 00cc               								# 1 == Player 1 2 == Player 2
+ 221 00cc               
+ 222 00cc               input_restart:					# This is here becasue I don't want that^ to
+ 223 00cc               								# change. Because the register are restored s7
+ 224 00cc               								# should return to its state
+ 225 00cc               
+ 226 00cc 34080002		li	$t0, 2
+ 227 00d0 12E8000C		beq	$s7, $t0, input_2
+ 228 00d4               
+ 229 00d4               input_1:
+ 230 00d4               
+ 231 00d4 34020004		li	$v0, PRINT_STRING
+ 232 00d8 3C040000		la	$a0, space
+     00dc 34840000
+ 233 00e0 0000000C		syscall
+ 234 00e4               
+ 235 00e4 34020004		li	$v0, PRINT_STRING		# Prints Player 1's select 
+ 236 00e8 3C040000		la	$a0, player1
+     00ec 34840000
+ 237 00f0 0000000C		syscall
+ 238 00f4               
+ 239 00f4 3C080000		la	$t0, token_1			# Sets the player's token
+     00f8 35080000
+ 240 00fc 81160000		lb	$s6, 0($t0)
+ 241 0100               
+ 242 0100 0800004C		j	read_in
+ 243 0104               
+ 244 0104               input_2:
+ 245 0104               
+ 246 0104 34020004		li	$v0, PRINT_STRING
+ 247 0108 3C040000		la	$a0, space
+     010c 34840000
+ 248 0110 0000000C		syscall
+ 249 0114               
+ 250 0114 34020004		li	$v0, PRINT_STRING		# Prints Player 2's select
+ 251 0118 3C040000		la	$a0, player2
+     011c 34840000
+ 252 0120 0000000C		syscall
+ 253 0124               
+ 254 0124 3C080000		la	$t0, token_2			# Sets the players token
+     0128 35080000
+ 255 012c 81160000		lb	$s6, 0($t0)
+ 256 0130               
+ 257 0130               read_in:
+ 258 0130               
+ 259 0130 34020005		li	$v0, READ_INT			# Get the users input
+ 260 0134 0000000C		syscall
+ 261 0138               
+ 262 0138 00408021		move $s0, $v0				# Save user input
+ 263 013c               
+ 264 013c 00008821		move $s1, $zero				# Gets the left most spot to test
+ 265 0140 2413FFFF		li	$s3, -1
+ 266 0144 34120007		li	$s2, 7					# Farthest edge of game	+1 to make sure that it
+ 267 0148               								# 	is on the board 6 < 7 retruns true
+ 268 0148               
+ 269 0148 0211402A		slt	$t0, $s0, $s1			# if negative then its a 1. 0 if greater than 0
+ 270 014c 0212482A		slt	$t1, $s0, $s2			# if less than 7 then a 1. 0 if greater than 7
+ 271 0150               
+ 272 0150 02E02021		move $a0, $s7
+ 273 0154               
+ 274 0154 12130238		beq	$s0, $s3, exit_quit			# -1 detected. Go to exit statement.
+ 275 0158 1500001F		bne	$t0, $zero, error_in	# if negative go to error
+ 276 015c 1120001E		beq	$t1, $zero, error_in	# if 7 or larger go to error
+ 277 0160               
+ 278 0160 02002021		move $a0, $s0				# Clears this check. Now it has to check the
+ 279 0164 34050001		li	$a1, 1					# 	top row to make sure that it can palce a
+ 280 0168 0C00009A		jal top_error				#	token there.
+ 281 016c               
+ 282 016c               								# Legal move now change token
+ 283 016c               
+ 284 016c 34010004		mul $t1, $s0, 4				# s0 is the user input Mul it by word = 4 bits
+     0170 02010018
+     0174 00004812
+ 285 0178 3C080000		la	$t0, column				# Find the column possiton on the board
+     017c 35080000
+ 286 0180 01284020		add	$t0, $t1, $t0
+ 287 0184 8D110000		lw	$s1, 0($t0)
+ 288 0188               
+ 289 0188 3C080000		la	$t0, token_3			# Sets s2 to be " " to find the first empty
+     018c 35080000
+ 290 0190 81120000		lb	$s2, 0($t0)				#	space in that column
+ 291 0194               
+ 292 0194 00009821		move $s3, $zero				# a counter
+ 293 0198               
+ 294 0198               loop_in:
+ 295 0198               
+ 296 0198 34010004		mul	$t1, $s3, 4
+     019c 02610018
+     01a0 00004812
+ 297 01a4 3C080000		la	$t0, row				# Gets the right row starting possition
+     01a8 35080000
+ 298 01ac 01094020		add	$t0, $t0, $t1
+ 299 01b0 8D140000		lw	$s4, 0($t0)
+ 300 01b4               
+ 301 01b4 0234A820		add	$s5, $s1, $s4			# Shift over on the row to the correct column
+ 302 01b8               
+ 303 01b8 3C080000		la	$t0, board				# Loads the space on the board.
+     01bc 35080000
+ 304 01c0 01154020		add	$t0, $t0, $s5
+ 305 01c4 81140000		lb	$s4, 0($t0)
+ 306 01c8               
+ 307 01c8 12920008		beq	$s4, $s2, done_in		# If the board space == " " then we can adjust
+ 308 01cc               								#	the token.
+ 309 01cc               
+ 310 01cc 34080001		li	$t0, 1
+ 311 01d0 02689820		add	$s3, $s3, $t0			# increment the counter
+ 312 01d4               
+ 313 01d4 08000066		j	loop_in					# loop.
+ 314 01d8               
+ 315 01d8               error_in:
+ 316 01d8               
+ 317 01d8 34020004		li	$v0, PRINT_STRING		# Prints the illegal movement 
+ 318 01dc 3C040000		la	$a0, illegal_num
+     01e0 34840000
+ 319 01e4 0000000C		syscall
+ 320 01e8               
+ 321 01e8 08000033		j input_restart
+ 322 01ec               
+ 323 01ec               done_in:						# Token space has been found
+ 324 01ec               								# s6 is the players token set from above
+ 325 01ec               								# s5 is the bords place to change in memory
+ 326 01ec               
+ 327 01ec 3C080000		la	$t0, board
+     01f0 35080000
+ 328 01f4 01154020		add	$t0, $t0, $s5			# Get the memory address
+ 329 01f8               
+ 330 01f8 A1160000		sb	$s6, 0($t0)				# Store the token in memory
+ 331 01fc               
+ 332 01fc 34020004		li	$v0, PRINT_STRING
+ 333 0200 3C040000		la	$a0, space
+     0204 34840000
+ 334 0208 0000000C		syscall
+ 335 020c               
+ 336 020c 34020004		li	$v0, PRINT_STRING
+ 337 0210 3C040000		la	$a0, board
+     0214 34840000
+ 338 0218 0000000C		syscall
+ 339 021c               
+ 340 021c 34020004		li	$v0, PRINT_STRING
+ 341 0220 3C040000		la	$a0, space
+     0224 34840000
+ 342 0228 0000000C		syscall
+ 343 022c               
+ 344 022c               #
+ 345 022c               # Restore registers ra and s0 - s7 from the stack.
+ 346 022c               #
+ 347 022c 8FBF002C	    lw  $ra, -4+A_FRAMESIZE($sp)
+ 348 0230 8FB70028	    lw  $s7, 40($sp)
+ 349 0234 8FB60024	    lw  $s6, 36($sp)
+ 350 0238 8FB50020	    lw  $s5, 32($sp)
+ 351 023c 8FA4001C	    lw  $a0, 28($sp)
+ 352 0240 8FA50018	    lw  $a1, 24($sp)
+ 353 0244 8FA60014	    lw  $a2, 20($sp)
+ 354 0248 8FB40010	    lw  $s4, 16($sp)
+ 355 024c 8FB3000C	    lw  $s3, 12($sp)
+ 356 0250 8FB20008	    lw  $s2, 8($sp)
+ 357 0254 8FB10004	    lw  $s1, 4($sp)
+ 358 0258 8FB00000	    lw  $s0, 0($sp)
+ 359 025c 34080030		li	$t0, A_FRAMESIZE
+ 360 0260 03A8E820	    add $sp, $sp, $t0
+ 361 0264               
+ 362 0264 03E00008		jr	$ra
+ 363 0268               
+ 364 0268               #
+ 365 0268               # Name:		top error check
+ 366 0268               #
+ 367 0268               # Description: 	This function checks to make sure that there are no tokens in
+ 368 0268               #				the top column of a given row. If there is one it will propt
+ 369 0268               #				the user to input a new number.
+ 370 0268               #
+ 371 0268               
+ 372 0268               top_error:
+ 373 0268               
+ 374 0268               #
+ 375 0268               # Save registers ra and s0 - s7 on the stack.
+ 376 0268               #
+ 377 0268 2408FFD0		li	$t0, -A_FRAMESIZE
+ 378 026c 03A8E820	    add $sp, $sp, $t0
+ 379 0270 AFBF002C	    sw  $ra, -4+A_FRAMESIZE($sp)
+ 380 0274 AFB70028	    sw  $s7, 40($sp)
+ 381 0278 AFB60024	    sw  $s6, 36($sp)
+ 382 027c AFB50020	    sw  $s5, 32($sp)
+ 383 0280 AFA4001C	    sw  $a0, 28($sp)
+ 384 0284 AFA50018	    sw  $a1, 24($sp)
+ 385 0288 AFA60014	    sw  $a2, 20($sp)
+ 386 028c AFB40010	    sw  $s4, 16($sp)
+ 387 0290 AFB3000C	    sw  $s3, 12($sp)
+ 388 0294 AFB20008		sw  $s2, 8($sp)
+ 389 0298 AFB10004		sw 	$s1, 4($sp)
+ 390 029c AFB00000		sw	$s0, 0($sp)
+ 391 02a0               
+ 392 02a0               
+ 393 02a0               	#if top column == " " then continue else error
+ 394 02a0               
+ 395 02a0 00808021		move $s0, $a0				# Moves the column into a useable register
+ 396 02a4               
+ 397 02a4 3C080000		la	$t0, column
+     02a8 35080000
+ 398 02ac 34010004		mul	$t1, $s0, 4
+     02b0 02010018
+     02b4 00004812
+ 399 02b8 01094020		add	$t0, $t0, $t1
+ 400 02bc 8D110000		lw	$s1, 0($t0)				# Load column possiton in the table
+ 401 02c0               
+ 402 02c0 34090014		li	$t1, 20
+ 403 02c4 3C080000		la	$t0, row				# Load the top row
+     02c8 35080000
+ 404 02cc 01094020		add	$t0, $t0, $t1
+ 405 02d0 8D120000		lw	$s2, 0($t0)
+ 406 02d4               
+ 407 02d4 02328820		add	$s1, $s1, $s2			# Gets the char space for the top pos of the
+ 408 02d8               								# column
+ 409 02d8               
+ 410 02d8 3C090000		la	$t1, token_3
+     02dc 35290000
+ 411 02e0 81330000		lb	$s3, 0($t1)				# Set s3 to be a " "
+ 412 02e4               
+ 413 02e4 3C080000		la	$t0, board
+     02e8 35080000
+ 414 02ec 01114020		add	$t0, $t0, $s1
+ 415 02f0 81150000		lb	$s5, 0($t0)				# Load the char on the board.
+ 416 02f4               
+ 417 02f4 16B3000F		bne	$s5, $s3, error2		# If it doesn't equal a " " then branch
+ 418 02f8               
+ 419 02f8               #
+ 420 02f8               # Restore registers ra and s0 - s7 from the stack.
+ 421 02f8               #
+ 422 02f8 8FBF002C	    lw  $ra, -4+A_FRAMESIZE($sp)
+ 423 02fc 8FB70028	    lw  $s7, 40($sp)
+ 424 0300 8FB60024	    lw  $s6, 36($sp)
+ 425 0304 8FB50020	    lw  $s5, 32($sp)
+ 426 0308 8FA4001C	    lw  $a0, 28($sp)
+ 427 030c 8FA50018	    lw  $a1, 24($sp)
+ 428 0310 8FA60014	    lw  $a2, 20($sp)
+ 429 0314 8FB40010	    lw  $s4, 16($sp)
+ 430 0318 8FB3000C	    lw  $s3, 12($sp)
+ 431 031c 8FB20008	    lw  $s2, 8($sp)
+ 432 0320 8FB10004	    lw  $s1, 4($sp)
+ 433 0324 8FB00000	    lw  $s0, 0($sp)
+ 434 0328 34080030		li	$t0, A_FRAMESIZE
+ 435 032c 03A8E820	    add $sp, $sp, $t0
+ 436 0330               
+ 437 0330 03E00008		jr	$ra						# No problem found continue.
+ 438 0334               
+ 439 0334               error2:
+ 440 0334               
+ 441 0334               #
+ 442 0334               # Restore registers ra and s0 - s7 from the stack.
+ 443 0334               #
+ 444 0334 8FBF002C	    lw  $ra, -4+A_FRAMESIZE($sp)
+ 445 0338 8FB70028	    lw  $s7, 40($sp)
+ 446 033c 8FB60024	    lw  $s6, 36($sp)
+ 447 0340 8FB50020	    lw  $s5, 32($sp)
+ 448 0344 8FA4001C	    lw  $a0, 28($sp)
+ 449 0348 8FA50018	    lw  $a1, 24($sp)
+ 450 034c 8FA60014	    lw  $a2, 20($sp)
+ 451 0350 8FB40010	    lw  $s4, 16($sp)
+ 452 0354 8FB3000C	    lw  $s3, 12($sp)
+ 453 0358 8FB20008	    lw  $s2, 8($sp)
+ 454 035c 8FB10004	    lw  $s1, 4($sp)
+ 455 0360 8FB00000	    lw  $s0, 0($sp)
+ 456 0364 34080030		li	$t0, A_FRAMESIZE
+ 457 0368 03A8E820	    add $sp, $sp, $t0
+ 458 036c               
+ 459 036c 34020004		li	$v0, PRINT_STRING		# Prints the error
+ 460 0370 3C040000		la	$a0, illegal_total
+     0374 34840000
+ 461 0378 0000000C		syscall
+ 462 037c               
+ 463 037c 08000033		j	input_restart
+ 464 0380               
+ 465 0380               #
+ 466 0380               # Name:		Win Horizontal
+ 467 0380               #
+ 468 0380               # Description:	This is a test that after a player inputs their column to test
+ 469 0380               #					for a win horizontally.
+ 470 0380               #
+ 471 0380               
+ 472 0380               win_h:
+ 473 0380               
+ 474 0380               #
+ 475 0380               # Save registers ra and s0 - s7 on the stack.
+ 476 0380               #
+ 477 0380 2408FFD0		li	$t0, -A_FRAMESIZE
+ 478 0384 03A8E820	    add $sp, $sp, $t0
+ 479 0388 AFBF002C	    sw  $ra, -4+A_FRAMESIZE($sp)
+ 480 038c AFB70028	    sw  $s7, 40($sp)
+ 481 0390 AFB60024	    sw  $s6, 36($sp)
+ 482 0394 AFB50020	    sw  $s5, 32($sp)
+ 483 0398 AFA4001C	    sw  $a0, 28($sp)
+ 484 039c AFA50018	    sw  $a1, 24($sp)
+ 485 03a0 AFA60014	    sw  $a2, 20($sp)
+ 486 03a4 AFB40010	    sw  $s4, 16($sp)
+ 487 03a8 AFB3000C	    sw  $s3, 12($sp)
+ 488 03ac AFB20008		sw  $s2, 8($sp)
+ 489 03b0 AFB10004		sw 	$s1, 4($sp)
+ 490 03b4 AFB00000		sw	$s0, 0($sp)
+ 491 03b8               
+ 492 03b8               	# if counter of players token == 4 in a row then win
+ 493 03b8               
+ 494 03b8 00A0B821		move $s7, $a1					# Stores what player to check
+ 495 03bc               
+ 496 03bc 34080002		li	$t0, 2
+ 497 03c0 11170004		beq	$t0, $s7, win_h_2			# Figures out what token to load
+ 498 03c4               
+ 499 03c4               win_h_1:
+ 500 03c4               
+ 501 03c4 3C080000		la	$t0, token_1				# Loads player 1's token
+     03c8 35080000
+ 502 03cc 81100000		lb	$s0, 0($t0)
+ 503 03d0               
+ 504 03d0 080000F8		j	win_h_test
+ 505 03d4               
+ 506 03d4               win_h_2:
+ 507 03d4               
+ 508 03d4 3C080000		la	$t0, token_2				# Loads player 2's token
+     03d8 35080000
+ 509 03dc 81100000		lb	$s0, 0($t0)
+ 510 03e0               
+ 511 03e0               win_h_test:
+ 512 03e0               
+ 513 03e0 00008821		move $s1, $zero					# Counter for X token in a row
+ 514 03e4 00009021		move $s2, $zero					# Counter for column
+ 515 03e8 00009821		move $s3, $zero					# Counter for row
+ 516 03ec               
+ 517 03ec 34140060		li	$s4, 96						# gets the top left corner of the board
+ 518 03f0               
+ 519 03f0               loop_h:
+ 520 03f0               
+ 521 03f0 34080004		li	$t0, 4
+ 522 03f4 11110018		beq	$t0, $s1, win_h_win
+ 523 03f8               
+ 524 03f8 34080006		li	$t0, 6
+ 525 03fc 11130019		beq	$t0, $s3, win_h_exit		# out of rows
+ 526 0400               
+ 527 0400 34080007		li	$t0, 7
+ 528 0404 15120005		bne	$t0, $s2, loop_h_cont		# move to next row
+ 529 0408               
+ 530 0408 34080001		li	$t0, 1
+ 531 040c 02689820		add	$s3, $s3, $t0				# increment to row count
+ 532 0410               
+ 533 0410 34080024		li	$t0, 36
+ 534 0414 0288A020		add	$s4, $s4, $t0				# go to next row start
+ 535 0418 00009021		move $s2, $zero
+ 536 041c               
+ 537 041c               loop_h_cont:
+ 538 041c               
+ 539 041c 0000B021		move $s6, $zero
+ 540 0420               
+ 541 0420 3C080000		la	$t0, board
+     0424 35080000
+ 542 0428 01144020		add	$t0, $t0, $s4				# get the token pos on the board
+ 543 042c 81160000		lb	$s6, 0($t0)
+ 544 0430               
+ 545 0430 16160003		bne	$s0, $s6, loop_h_clear		# if not equal move on
+ 546 0434               
+ 547 0434 34080001		li	$t0, 1
+ 548 0438 02288820		add	$s1, $s1, $t0				# found an equal so increment by 1
+ 549 043c               
+ 550 043c 08000111		j	loop_h_end
+ 551 0440               
+ 552 0440               loop_h_clear:
+ 553 0440               
+ 554 0440 00008821		move $s1, $zero					# clear the counter
+ 555 0444               
+ 556 0444               loop_h_end:
+ 557 0444               
+ 558 0444 34080001		li	$t0, 1
+ 559 0448 02489020		add $s2, $s2, $t0				# increment the column
+ 560 044c               
+ 561 044c 34080004		li	$t0, 4
+ 562 0450 0288A020		add $s4, $s4, $t0				# move the counter over
+ 563 0454               
+ 564 0454 080000FC		j	loop_h						# go back to start
+ 565 0458               
+ 566 0458               
+ 567 0458               #token for player is in s0, player number is in s7
+ 568 0458               
+ 569 0458               win_h_win:
+ 570 0458               
+ 571 0458 34080001		li	$t0, 1
+ 572 045c 11170167		beq	$t0, $s7, win_1
+ 573 0460 08000284		j	win_2
+ 574 0464               
+ 575 0464               
+ 576 0464               win_h_exit: 						# no horizontal win
+ 577 0464               #
+ 578 0464               # Restore registers ra and s0 - s7 from the stack.
+ 579 0464               #
+ 580 0464 8FBF002C	    lw  $ra, -4+A_FRAMESIZE($sp)
+ 581 0468 8FB70028	    lw  $s7, 40($sp)
+ 582 046c 8FB60024	    lw  $s6, 36($sp)
+ 583 0470 8FB50020	    lw  $s5, 32($sp)
+ 584 0474 8FA4001C	    lw  $a0, 28($sp)
+ 585 0478 8FA50018	    lw  $a1, 24($sp)
+ 586 047c 8FA60014	    lw  $a2, 20($sp)
+ 587 0480 8FB40010	    lw  $s4, 16($sp)
+ 588 0484 8FB3000C	    lw  $s3, 12($sp)
+ 589 0488 8FB20008	    lw  $s2, 8($sp)
+ 590 048c 8FB10004	    lw  $s1, 4($sp)
+ 591 0490 8FB00000	    lw  $s0, 0($sp)
+ 592 0494 34080030		li	$t0, A_FRAMESIZE
+ 593 0498 03A8E820	    add $sp, $sp, $t0
+ 594 049c               
+ 595 049c 03E00008		jr	$ra
+ 596 04a0               
+ 597 04a0               #
+ 598 04a0               # Name:		Win vertical
+ 599 04a0               #
+ 600 04a0               # Description:	This test to see that after a user inputs their data if they
+ 601 04a0               #					win vertically.
+ 602 04a0               #
+ 603 04a0               
+ 604 04a0               win_v:
+ 605 04a0               
+ 606 04a0               #
+ 607 04a0               # Save registers ra and s0 - s7 on the stack.
+ 608 04a0               #
+ 609 04a0 2408FFD0		li	$t0, -A_FRAMESIZE
+ 610 04a4 03A8E820	    add $sp, $sp, $t0
+ 611 04a8 AFBF002C	    sw  $ra, -4+A_FRAMESIZE($sp)
+ 612 04ac AFB70028	    sw  $s7, 40($sp)
+ 613 04b0 AFB60024	    sw  $s6, 36($sp)
+ 614 04b4 AFB50020	    sw  $s5, 32($sp)
+ 615 04b8 AFA4001C	    sw  $a0, 28($sp)
+ 616 04bc AFA50018	    sw  $a1, 24($sp)
+ 617 04c0 AFA60014	    sw  $a2, 20($sp)
+ 618 04c4 AFB40010	    sw  $s4, 16($sp)
+ 619 04c8 AFB3000C	    sw  $s3, 12($sp)
+ 620 04cc AFB20008		sw  $s2, 8($sp)
+ 621 04d0 AFB10004		sw 	$s1, 4($sp)
+ 622 04d4 AFB00000		sw	$s0, 0($sp)
+ 623 04d8               
+ 624 04d8               	# if counter of players token == 4 in a row then win
+ 625 04d8               
+ 626 04d8 00A0B821		move $s7, $a1					# Stores what player to check
+ 627 04dc               
+ 628 04dc 34080002		li	$t0, 2
+ 629 04e0 11170004		beq	$t0, $s7, win_v_2			# Figures out what token to load
+ 630 04e4               
+ 631 04e4               win_v_1:
+ 632 04e4               
+ 633 04e4 3C080000		la	$t0, token_1				# Loads player 1's token
+     04e8 35080000
+ 634 04ec 81100000		lb	$s0, 0($t0)
+ 635 04f0               
+ 636 04f0 08000140		j	win_v_test
+ 637 04f4               
+ 638 04f4               win_v_2:
+ 639 04f4               
+ 640 04f4 3C080000		la	$t0, token_2				# Loads player 2's token
+     04f8 35080000
+ 641 04fc 81100000		lb	$s0, 0($t0)
+ 642 0500               
+ 643 0500               win_v_test:
+ 644 0500               
+ 645 0500 00008821		move $s1, $zero					# Counter for X token in a row
+ 646 0504 00009021		move $s2, $zero					# Counter for column
+ 647 0508 00009821		move $s3, $zero					# Counter for row
+ 648 050c               
+ 649 050c 3C080000		la	$t0, row
+     0510 35080000
+ 650 0514 3C090000		la	$t1, column
+     0518 35290000
+ 651 051c 8D080000		lw	$t0, 0($t0)
+ 652 0520 8D290000		lw	$t1, 0($t1)
+ 653 0524 0109A020		add	$s4, $t0, $t1				# gets the top left corner of the board
+ 654 0528               
+ 655 0528               loop_v:
+ 656 0528               
+ 657 0528 34080004		li	$t0, 4
+ 658 052c 1111001B		beq	$t0, $s1, win_v_win			# player wins found 4
+ 659 0530               
+ 660 0530 34080007		li	$t0, 7
+ 661 0534 1112001C		beq	$t0, $s2, win_v_exit		# out of columns
+ 662 0538               
+ 663 0538 34080006		li	$t0, 6
+ 664 053c 15130008		bne	$t0, $s3, loop_v_cont		# move to next row
+ 665 0540               
+ 666 0540 34080001		li	$t0, 1
+ 667 0544 02489020		add	$s2, $s2, $t0				# increment to column count
+ 668 0548               
+ 669 0548 3414005C		li	$s4, 92
+ 670 054c 34090004		li	$t1, 4
+ 671 0550 01320018		mul	$t1, $t1, $s2
+     0554 00004812
+ 672 0558 0289A020		add	$s4, $s4, $t1				# go to next column start
+ 673 055c               
+ 674 055c 00009821		move $s3, $zero
+ 675 0560               
+ 676 0560               loop_v_cont:
+ 677 0560               
+ 678 0560 0000B021		move $s6, $zero
+ 679 0564               
+ 680 0564 3C080000		la	$t0, board
+     0568 35080000
+ 681 056c 01144020		add	$t0, $t0, $s4				# get the token pos on the board
+ 682 0570 81160000		lb	$s6, 0($t0)
+ 683 0574               
+ 684 0574 16160003		bne	$s0, $s6, loop_v_clear		# if not equal move on
+ 685 0578               
+ 686 0578 34080001		li	$t0, 1
+ 687 057c 02288820		add	$s1, $s1, $t0				# found an equal so increment by 1
+ 688 0580               
+ 689 0580 08000162		j	loop_v_end
+ 690 0584               
+ 691 0584               loop_v_clear:
+ 692 0584               
+ 693 0584 00008821		move $s1, $zero					# clear the counter
+ 694 0588               
+ 695 0588               loop_v_end:
+ 696 0588               
+ 697 0588 34080001		li	$t0, 1
+ 698 058c 02689820		add $s3, $s3, $t0				# increment the row
+ 699 0590               
+ 700 0590 34080040		li	$t0, 64
+ 701 0594 0288A020		add $s4, $s4, $t0				# move the counter down
+ 702 0598               
+ 703 0598 0800014A		j	loop_v						# go back to start
+ 704 059c               
+ 705 059c               
+ 706 059c               #token for player is in s0, player number is in s7
+ 707 059c               
+ 708 059c               win_v_win:
+ 709 059c               
+ 710 059c 34080001		li	$t0, 1
+ 711 05a0 11170116		beq	$t0, $s7, win_1
+ 712 05a4 08000284		j	win_2
+ 713 05a8               
+ 714 05a8               win_v_exit:
+ 715 05a8               
+ 716 05a8               #
+ 717 05a8               # Restore registers ra and s0 - s7 from the stack.
+ 718 05a8               #
+ 719 05a8 8FBF002C	    lw  $ra, -4+A_FRAMESIZE($sp)
+ 720 05ac 8FB70028	    lw  $s7, 40($sp)
+ 721 05b0 8FB60024	    lw  $s6, 36($sp)
+ 722 05b4 8FB50020	    lw  $s5, 32($sp)
+ 723 05b8 8FA4001C	    lw  $a0, 28($sp)
+ 724 05bc 8FA50018	    lw  $a1, 24($sp)
+ 725 05c0 8FA60014	    lw  $a2, 20($sp)
+ 726 05c4 8FB40010	    lw  $s4, 16($sp)
+ 727 05c8 8FB3000C	    lw  $s3, 12($sp)
+ 728 05cc 8FB20008	    lw  $s2, 8($sp)
+ 729 05d0 8FB10004	    lw  $s1, 4($sp)
+ 730 05d4 8FB00000	    lw  $s0, 0($sp)
+ 731 05d8 34080030		li	$t0, A_FRAMESIZE
+ 732 05dc 03A8E820	    add $sp, $sp, $t0
+ 733 05e0               
+ 734 05e0 03E00008		jr	$ra
+ 735 05e4               
+ 736 05e4               #
+ 737 05e4               # Name:		Win Diagonal test
+ 738 05e4               #
+ 739 05e4               # Description:	This will check all available places for a diagaonal win
+ 740 05e4               #					It starts off with going down to the right then down to
+ 741 05e4               #					the left.
+ 742 05e4               #
+ 743 05e4               
+ 744 05e4               win_d:
+ 745 05e4               
+ 746 05e4               #
+ 747 05e4               # Save registers ra and s0 - s7 on the stack.
+ 748 05e4               #
+ 749 05e4 2408FFD0		li	$t0, -A_FRAMESIZE
+ 750 05e8 03A8E820	    add $sp, $sp, $t0
+ 751 05ec AFBF002C	    sw  $ra, -4+A_FRAMESIZE($sp)
+ 752 05f0 AFB70028	    sw  $s7, 40($sp)
+ 753 05f4 AFB60024	    sw  $s6, 36($sp)
+ 754 05f8 AFB50020	    sw  $s5, 32($sp)
+ 755 05fc AFA4001C	    sw  $a0, 28($sp)
+ 756 0600 AFA50018	    sw  $a1, 24($sp)
+ 757 0604 AFA60014	    sw  $a2, 20($sp)
+ 758 0608 AFB40010	    sw  $s4, 16($sp)
+ 759 060c AFB3000C	    sw  $s3, 12($sp)
+ 760 0610 AFB20008		sw  $s2, 8($sp)
+ 761 0614 AFB10004		sw 	$s1, 4($sp)
+ 762 0618 AFB00000		sw	$s0, 0($sp)
+ 763 061c               
+ 764 061c               	# do
+ 765 061c               	# if counter of players token == 4 in a row then win
+ 766 061c               
+ 767 061c 00A0B821		move $s7, $a1					# Stores what player to check
+ 768 0620               
+ 769 0620 34080002		li	$t0, 2
+ 770 0624 11170004		beq	$t0, $s7, win_d_2			# Figures out what token to load
+ 771 0628               
+ 772 0628               win_d_1:
+ 773 0628               
+ 774 0628 3C080000		la	$t0, token_1				# Loads player 1's token
+     062c 35080000
+ 775 0630 81100000		lb	$s0, 0($t0)
+ 776 0634               
+ 777 0634 08000191		j	win_d_test
+ 778 0638               
+ 779 0638               win_d_2:
+ 780 0638               
+ 781 0638 3C080000		la	$t0, token_2				# Loads player 2's token
+     063c 35080000
+ 782 0640 81100000		lb	$s0, 0($t0)
+ 783 0644               
+ 784 0644               win_d_test:
+ 785 0644               
+ 786 0644 00008821		move $s1, $zero					# Counter for X token in a row
+ 787 0648 00009021		move $s2, $zero					# Counter for looping
+ 788 064c 00009821		move $s3, $zero					# poss in the count loop
+ 789 0650               
+ 790 0650               win_d_move_0:
+ 791 0650               
+ 792 0650 34080000		li	$t0, 0
+ 793 0654 15130009		bne	$t0, $s3, win_d_move_1		# if the diagonal count is this
+ 794 0658               
+ 795 0658 3C080000		la	$t0, loop_count
+     065c 35080000
+ 796 0660 8D150000		lw	$s5, 0($t0)					# Gets how many times to loop
+ 797 0664               
+ 798 0664 34110000		li	$s1, 0						# reset counters
+ 799 0668 34120000		li	$s2, 0
+ 800 066c 341400E0		li	$s4, 224					# get the starting poss
+ 801 0670 34080001		li	$t0, 1
+ 802 0674 02689820		add	$s3, $s3, $t0				# increment the count to move onto the
+ 803 0678               									# the next one. This is used as a test case
+ 804 0678               
+ 805 0678 080001D6		j	loop_d
+ 806 067c               
+ 807 067c               win_d_move_1:
+ 808 067c               
+ 809 067c 34080001		li	$t0, 1
+ 810 0680 15130009		bne	$t0, $s3, win_d_move_2
+ 811 0684               
+ 812 0684 3C080000		la	$t0, loop_count				# Gets how many times to loop
+     0688 35080000
+ 813 068c 8D150004		lw	$s5, 4($t0)
+ 814 0690               
+ 815 0690 34110000		li	$s1, 0
+ 816 0694 34120000		li	$s2, 0
+ 817 0698 341400A0		li	$s4, 160
+ 818 069c 34080001		li	$t0, 1
+ 819 06a0 02689820		add	$s3, $s3, $t0
+ 820 06a4               
+ 821 06a4 080001D6		j	loop_d
+ 822 06a8               
+ 823 06a8               win_d_move_2:
+ 824 06a8               
+ 825 06a8 34080002		li	$t0, 2
+ 826 06ac 15130009		bne	$t0, $s3, win_d_move_3
+ 827 06b0               
+ 828 06b0 3C080000		la	$t0, loop_count
+     06b4 35080000
+ 829 06b8 8D150008		lw	$s5, 8($t0)
+ 830 06bc               
+ 831 06bc 34110000		li	$s1, 0
+ 832 06c0 34120000		li	$s2, 0
+ 833 06c4 34140060		li	$s4, 96
+ 834 06c8 34080001		li	$t0, 1
+ 835 06cc 02689820		add	$s3, $s3, $t0
+ 836 06d0               
+ 837 06d0 080001D6		j	loop_d 
+ 838 06d4               
+ 839 06d4               win_d_move_3:
+ 840 06d4               
+ 841 06d4 34080003		li	$t0, 3
+ 842 06d8 15130009		bne	$t0, $s3, win_d_move_4
+ 843 06dc               
+ 844 06dc 3C080000		la	$t0, loop_count
+     06e0 35080000
+ 845 06e4 8D15000C		lw	$s5, 12($t0)
+ 846 06e8               
+ 847 06e8 34110000		li	$s1, 0
+ 848 06ec 34120000		li	$s2, 0
+ 849 06f0 34140064		li	$s4, 100
+ 850 06f4 34080001		li	$t0, 1
+ 851 06f8 02689820		add	$s3, $s3, $t0
+ 852 06fc               
+ 853 06fc 080001D6		j	loop_d 
+ 854 0700               
+ 855 0700               win_d_move_4:
+ 856 0700               
+ 857 0700 34080004		li	$t0, 4
+ 858 0704 15130009		bne	$t0, $s3, win_d_move_5
+ 859 0708               
+ 860 0708 3C080000		la	$t0, loop_count
+     070c 35080000
+ 861 0710 8D15000C		lw	$s5, 12($t0)
+ 862 0714               
+ 863 0714 34110000		li	$s1, 0
+ 864 0718 34120000		li	$s2, 0
+ 865 071c 34140068		li	$s4, 104
+ 866 0720 34080001		li	$t0, 1
+ 867 0724 02689820		add	$s3, $s3, $t0
+ 868 0728               
+ 869 0728 080001D6		j	loop_d 
+ 870 072c               
+ 871 072c               win_d_move_5:
+ 872 072c               
+ 873 072c 34080005		li	$t0, 5
+ 874 0730 1513001A		bne	$t0, $s3, win_d_test_2
+ 875 0734               
+ 876 0734 3C080000		la	$t0, loop_count
+     0738 35080000
+ 877 073c 8D150010		lw	$s5, 16($t0)
+ 878 0740               
+ 879 0740 34110000		li	$s1, 0
+ 880 0744 34120000		li	$s2, 0
+ 881 0748 3414006C		li	$s4, 108
+ 882 074c 34080001		li	$t0, 1
+ 883 0750 02689820		add	$s3, $s3, $t0
+ 884 0754               
+ 885 0754 080001D6		j	loop_d
+ 886 0758               
+ 887 0758               # s0 == player token
+ 888 0758               # s1 == how many tokens of the same in a row
+ 889 0758               # s2 == how many loops made
+ 890 0758               # s4 == starting poss
+ 891 0758               # s5 == how many loops needed
+ 892 0758               # s7 == player num
+ 893 0758               
+ 894 0758               loop_d:
+ 895 0758               
+ 896 0758 34080004		li	$t0, 4
+ 897 075c 12280074		beq	$s1, $t0, win_d_win				# test to see if we win
+ 898 0760               
+ 899 0760 1255FFC6		beq	$s2, $s5, win_d_move_1			# cant go any farther
+ 900 0764               
+ 901 0764 3C080000		la	$t0, board
+     0768 35080000
+ 902 076c 02884020		add	$t0, $s4, $t0
+ 903 0770 81080000		lb	$t0, 0($t0)						# load the board
+ 904 0774               
+ 905 0774 15100003		bne	$t0, $s0, loop_d_skip			# tokens not the same skip ++
+ 906 0778               
+ 907 0778 34080001		li	$t0, 1
+ 908 077c 02288820		add	$s1, $s1, $t0					# found one so ++
+ 909 0780               
+ 910 0780 080001E2		j	loop_d_cont
+ 911 0784               
+ 912 0784               loop_d_skip:
+ 913 0784               
+ 914 0784 00008821		move $s1, $zero						# reset
+ 915 0788               	
+ 916 0788               
+ 917 0788               loop_d_cont:
+ 918 0788               
+ 919 0788 34080001		li	$t0, 1
+ 920 078c 02489020		add	$s2, $s2, $t0					# increment the loop count
+ 921 0790               
+ 922 0790 34080044		li	$t0, 68							# move to the next spot
+ 923 0794 0288A020		add	$s4, $s4, $t0
+ 924 0798               
+ 925 0798 080001D6		j	loop_d
+ 926 079c               
+ 927 079c               win_d_test_2:
+ 928 079c               
+ 929 079c 00008821		move $s1, $zero					# Counter for X token in a row
+ 930 07a0 00009021		move $s2, $zero					# Counter for looping
+ 931 07a4 00009821		move $s3, $zero					# poss in the count loop
+ 932 07a8               
+ 933 07a8               win_d_move_6:
+ 934 07a8               
+ 935 07a8 34080000		li	$t0, 0
+ 936 07ac 15130009		bne	$t0, $s3, win_d_move_7		# if the diagonal count is this
+ 937 07b0               
+ 938 07b0 3C080000		la	$t0, loop_count
+     07b4 35080000
+ 939 07b8 8D150000		lw	$s5, 0($t0)					# Gets how many times to loop
+ 940 07bc               
+ 941 07bc 34110000		li	$s1, 0						# reset counters
+ 942 07c0 34120000		li	$s2, 0
+ 943 07c4 341400F8		li	$s4, 248					# get the starting poss
+ 944 07c8 34080001		li	$t0, 1
+ 945 07cc 02689820		add	$s3, $s3, $t0
+ 946 07d0               
+ 947 07d0 0800022C		j	loop_d_2
+ 948 07d4               
+ 949 07d4               win_d_move_7:
+ 950 07d4               
+ 951 07d4 34080001		li	$t0, 1
+ 952 07d8 15130009		bne	$t0, $s3, win_d_move_8
+ 953 07dc               
+ 954 07dc 3C080000		la	$t0, loop_count				# Gets how many times to loop
+     07e0 35080000
+ 955 07e4 8D150004		lw	$s5, 4($t0)
+ 956 07e8               
+ 957 07e8 34110000		li	$s1, 0
+ 958 07ec 34120000		li	$s2, 0
+ 959 07f0 341400B8		li	$s4, 184
+ 960 07f4 34080001		li	$t0, 1
+ 961 07f8 02689820		add	$s3, $s3, $t0
+ 962 07fc               
+ 963 07fc 0800022C		j	loop_d_2
+ 964 0800               
+ 965 0800               win_d_move_8:
+ 966 0800               
+ 967 0800 34080002		li	$t0, 2
+ 968 0804 15130009		bne	$t0, $s3, win_d_move_9
+ 969 0808               
+ 970 0808 3C080000		la	$t0, loop_count
+     080c 35080000
+ 971 0810 8D150008		lw	$s5, 8($t0)
+ 972 0814               
+ 973 0814 34110000		li	$s1, 0
+ 974 0818 34120000		li	$s2, 0
+ 975 081c 34140078		li	$s4, 120
+ 976 0820 34080001		li	$t0, 1
+ 977 0824 02689820		add	$s3, $s3, $t0
+ 978 0828               
+ 979 0828 0800022C		j	loop_d_2
+ 980 082c               
+ 981 082c               win_d_move_9:
+ 982 082c               
+ 983 082c 34080003		li	$t0, 3
+ 984 0830 15130009		bne	$t0, $s3, win_d_move_10
+ 985 0834               
+ 986 0834 3C080000		la	$t0, loop_count
+     0838 35080000
+ 987 083c 8D15000C		lw	$s5, 12($t0)
+ 988 0840               
+ 989 0840 34110000		li	$s1, 0
+ 990 0844 34120000		li	$s2, 0
+ 991 0848 34140074		li	$s4, 116
+ 992 084c 34080001		li	$t0, 1
+ 993 0850 02689820		add	$s3, $s3, $t0
+ 994 0854               
+ 995 0854 0800022C		j	loop_d_2
+ 996 0858               
+ 997 0858               win_d_move_10:
+ 998 0858               
+ 999 0858 34080004		li	$t0, 4
+1000 085c 15130009		bne	$t0, $s3, win_d_move_11
+1001 0860               
+1002 0860 3C080000		la	$t0, loop_count
+     0864 35080000
+1003 0868 8D15000C		lw	$s5, 12($t0)
+1004 086c               
+1005 086c 34110000		li	$s1, 0
+1006 0870 34120000		li	$s2, 0
+1007 0874 34140070		li	$s4, 112
+1008 0878 34080001		li	$t0, 1
+1009 087c 02689820		add	$s3, $s3, $t0
+1010 0880               
+1011 0880 0800022C		j	loop_d_2
+1012 0884               
+1013 0884               win_d_move_11:
+1014 0884               
+1015 0884 34080005		li	$t0, 5
+1016 0888 1513001A		bne	$t0, $s3, win_d_exit
+1017 088c               
+1018 088c 3C080000		la	$t0, loop_count
+     0890 35080000
+1019 0894 8D150010		lw	$s5, 16($t0)
+1020 0898               
+1021 0898 34110000		li	$s1, 0
+1022 089c 34120000		li	$s2, 0
+1023 08a0 3414006C		li	$s4, 108
+1024 08a4 34080001		li	$t0, 1
+1025 08a8 02689820		add	$s3, $s3, $t0
+1026 08ac               
+1027 08ac 0800022C		j	loop_d_2
+1028 08b0               
+1029 08b0               # s0 == player token
+1030 08b0               # s1 == how many tokens of the same in a row
+1031 08b0               # s2 == how many loops made
+1032 08b0               # s4 == starting poss
+1033 08b0               # s5 == how many loops needed
+1034 08b0               # s7 == player num
+1035 08b0               
+1036 08b0               loop_d_2:
+1037 08b0               
+1038 08b0 34080004		li	$t0, 4
+1039 08b4 1228001E		beq	$s1, $t0, win_d_win				# test to see if we win
+1040 08b8               
+1041 08b8 1255FFBB		beq	$s2, $s5, win_d_move_6			# cant go any farther
+1042 08bc               
+1043 08bc 3C080000		la	$t0, board
+     08c0 35080000
+1044 08c4 02884020		add	$t0, $s4, $t0
+1045 08c8 81080000		lb	$t0, 0($t0)						# load the board
+1046 08cc               
+1047 08cc 15100003		bne	$t0, $s0, loop_d_skip_2			# tokens not the same skip ++
+1048 08d0               
+1049 08d0 34080001		li	$t0, 1
+1050 08d4 02288820		add	$s1, $s1, $t0					# found one so ++
+1051 08d8               
+1052 08d8 08000238		j	loop_d_cont_2
+1053 08dc               
+1054 08dc               loop_d_skip_2:
+1055 08dc               
+1056 08dc 00008821		move $s1, $zero						# reset
+1057 08e0               	
+1058 08e0               
+1059 08e0               loop_d_cont_2:
+1060 08e0               
+1061 08e0 34080001		li	$t0, 1
+1062 08e4 02489020		add	$s2, $s2, $t0					# increment the loop count
+1063 08e8               
+1064 08e8 3408003C		li	$t0, 60							# move to the next spot
+1065 08ec 0288A020		add	$s4, $s4, $t0
+1066 08f0               
+1067 08f0 0800022C		j	loop_d_2
+1068 08f4               
+1069 08f4               
+1070 08f4               win_d_exit: 						# no diagonal win
+1071 08f4               #
+1072 08f4               # Restore registers ra and s0 - s7 from the stack.
+1073 08f4               #
+1074 08f4 8FBF002C	    lw  $ra, -4+A_FRAMESIZE($sp)
+1075 08f8 8FB70028	    lw  $s7, 40($sp)
+1076 08fc 8FB60024	    lw  $s6, 36($sp)
+1077 0900 8FB50020	    lw  $s5, 32($sp)
+1078 0904 8FA4001C	    lw  $a0, 28($sp)
+1079 0908 8FA50018	    lw  $a1, 24($sp)
+1080 090c 8FA60014	    lw  $a2, 20($sp)
+1081 0910 8FB40010	    lw  $s4, 16($sp)
+1082 0914 8FB3000C	    lw  $s3, 12($sp)
+1083 0918 8FB20008	    lw  $s2, 8($sp)
+1084 091c 8FB10004	    lw  $s1, 4($sp)
+1085 0920 8FB00000	    lw  $s0, 0($sp)
+1086 0924 34080030		li	$t0, A_FRAMESIZE
+1087 0928 03A8E820	    add $sp, $sp, $t0
+1088 092c               
+1089 092c 03E00008		jr	$ra
+1090 0930               
+1091 0930               win_d_win:
+1092 0930               
+1093 0930 34080001		li	$t0, 1
+1094 0934 11170031		beq	$t0, $s7, win_1
+1095 0938 08000284		j	win_2
+1096 093c               
+1097 093c               #
+1098 093c               # Name:		Wint Tie test
+1099 093c               #
+1100 093c               # Description:		This is the test to see if there was a tie game made
+1101 093c               #
+1102 093c               #
+1103 093c               
+1104 093c               win_t:
+1105 093c               
+1106 093c               #
+1107 093c               # Save registers ra and s0 - s7 on the stack.
+1108 093c               #
+1109 093c 2408FFD0		li	$t0, -A_FRAMESIZE
+1110 0940 03A8E820	    add $sp, $sp, $t0
+1111 0944 AFBF002C	    sw  $ra, -4+A_FRAMESIZE($sp)
+1112 0948 AFB70028	    sw  $s7, 40($sp)
+1113 094c AFB60024	    sw  $s6, 36($sp)
+1114 0950 AFB50020	    sw  $s5, 32($sp)
+1115 0954 AFA4001C	    sw  $a0, 28($sp)
+1116 0958 AFA50018	    sw  $a1, 24($sp)
+1117 095c AFA60014	    sw  $a2, 20($sp)
+1118 0960 AFB40010	    sw  $s4, 16($sp)
+1119 0964 AFB3000C	    sw  $s3, 12($sp)
+1120 0968 AFB20008		sw  $s2, 8($sp)
+1121 096c AFB10004		sw 	$s1, 4($sp)
+1122 0970 AFB00000		sw	$s0, 0($sp)
+1123 0974               
+1124 0974               
+1125 0974               
+1126 0974 3C130000		la	$s3, token_3
+     0978 36730000
+1127 097c 82730000		lb	$s3, 0($s3)
+1128 0980               
+1129 0980 3C080000		la	$t0, row					# load all the correct spots
+     0984 35080000
+1130 0988 8D110014		lw	$s1, 20($t0)
+1131 098c 34120004		li	$s2, 4
+1132 0990 02328820		add	$s1, $s1, $s2
+1133 0994 3414007C		li	$s4, 124
+1134 0998               
+1135 0998               
+1136 0998               # s2 == current space on the board
+1137 0998               # s3 == token to break on
+1138 0998               # s4 == the break point
+1139 0998               
+1140 0998               loop_t:
+1141 0998               
+1142 0998 12540022		beq	$s2, $s4, win_t_print		# if the counter goes beyone the last
+1143 099c               									# line break bc there is a tie game
+1144 099c               
+1145 099c 3C080000		la	$t0, board
+     09a0 35080000
+1146 09a4 01124020		add	$t0, $t0, $s2
+1147 09a8 81080000		lb	$t0, 0($t0)
+1148 09ac               
+1149 09ac 15130001		bne	$t0, $s3, loop_cont
+1150 09b0               
+1151 09b0 08000270		j	win_t_exit
+1152 09b4               
+1153 09b4               loop_cont:
+1154 09b4               
+1155 09b4 34080004		li	$t0, 4						# move to the next tile
+1156 09b8 02489020		add	$s2, $s2, $t0
+1157 09bc 08000266		j	loop_t
+1158 09c0               
+1159 09c0               win_t_exit:
+1160 09c0               
+1161 09c0               #
+1162 09c0               # Restore registers ra and s0 - s7 from the stack.
+1163 09c0               #
+1164 09c0 8FBF002C	    lw  $ra, -4+A_FRAMESIZE($sp)
+1165 09c4 8FB70028	    lw  $s7, 40($sp)
+1166 09c8 8FB60024	    lw  $s6, 36($sp)
+1167 09cc 8FB50020	    lw  $s5, 32($sp)
+1168 09d0 8FA4001C	    lw  $a0, 28($sp)
+1169 09d4 8FA50018	    lw  $a1, 24($sp)
+1170 09d8 8FA60014	    lw  $a2, 20($sp)
+1171 09dc 8FB40010	    lw  $s4, 16($sp)
+1172 09e0 8FB3000C	    lw  $s3, 12($sp)
+1173 09e4 8FB20008	    lw  $s2, 8($sp)
+1174 09e8 8FB10004	    lw  $s1, 4($sp)
+1175 09ec 8FB00000	    lw  $s0, 0($sp)
+1176 09f0 34080030		li	$t0, A_FRAMESIZE
+1177 09f4 03A8E820	    add $sp, $sp, $t0
+1178 09f8               
+1179 09f8 03E00008		jr	$ra
+1180 09fc               
+1181 09fc               #
+1182 09fc               # Name:		Player 1's win statement
+1183 09fc               #
+1184 09fc               # Description: This prints out the input needed for a player 1 win. It also
+1185 09fc               #					ends the game.
+1186 09fc               #
+1187 09fc               
+1188 09fc               win_1:
+1189 09fc               
+1190 09fc 34020004		li	$v0, PRINT_STRING
+1191 0a00 3C040000		la	$a0, victory_1
+     0a04 34840000
+1192 0a08 0000000C		syscall
+1193 0a0c               
+1194 0a0c 08000022		j	exit
+1195 0a10               
+1196 0a10               
+1197 0a10               #
+1198 0a10               # Name:		Player 2's win statement
+1199 0a10               #
+1200 0a10               # Description: This prints out the input needed for a player 2 win. It also
+1201 0a10               #					ends the game.
+1202 0a10               #
+1203 0a10               
+1204 0a10               win_2:
+1205 0a10               
+1206 0a10 34020004		li	$v0, PRINT_STRING
+1207 0a14 3C040000		la	$a0, victory_2
+     0a18 34840000
+1208 0a1c 0000000C		syscall
+1209 0a20               
+1210 0a20 08000022		j	exit
+1211 0a24               
+1212 0a24               
+1213 0a24               #
+1214 0a24               # Name:		Tie game print
+1215 0a24               #
+1216 0a24               # Description:	The board is full and neither can win
+1217 0a24               #
+1218 0a24               
+1219 0a24               
+1220 0a24               win_t_print:
+1221 0a24               
+1222 0a24 34020004		li	$v0, PRINT_STRING			# Print ends in tie
+1223 0a28 3C040000		la	$a0, victory_t
+     0a2c 34840000
+1224 0a30 0000000C		syscall
+1225 0a34               
+1226 0a34 08000022		j	exit
+1227 0a38               
+1228 0a38               #
+1229 0a38               # Name:		Player Quit
+1230 0a38               #
+1231 0a38               # Description:	Deals with printing the correct player print
+1232 0a38               #				They quit why would anyone want to quit weird?
+1233 0a38               #
+1234 0a38               
+1235 0a38               exit_quit:
+1236 0a38               
+1237 0a38 0080B821		move $s7, $a0
+1238 0a3c 34100001		li	$s0, 1
+1239 0a40 16170005		bne	$s0, $s7, exit_quit_2
+1240 0a44               
+1241 0a44 34020004		li	$v0, PRINT_STRING			# Print player 1 quit
+1242 0a48 3C040000		la	$a0, quit_1
+     0a4c 34840000
+1243 0a50 0000000C		syscall
+1244 0a54               
+1245 0a54 08000022		j	exit
+1246 0a58               
+1247 0a58               exit_quit_2:
+1248 0a58               
+1249 0a58 34020004		li	$v0, PRINT_STRING			# Print player 2 quit
+1250 0a5c 3C040000		la	$a0, quit_2
+     0a60 34840000
+1251 0a64 0000000C		syscall
+1252 0a68               
+1253 0a68 08000022		j	exit
+
+
+A_FRAMESIZE    = 00000030   
+PRINT_INT      = 00000001   
+PRINT_STRING   = 00000004   
+READ_INT       = 00000005   
+board            00000056 R  data 
+column           00000394 R  data 
+done_in          000001EC R  text 
+error2           00000334 R  text 
+error_in         000001D8 R  text 
+exit             00000088 R  text 
+exit_quit        00000A38 R  text 
+exit_quit_2      00000A58 R  text 
+game_loop        00000030 R  text 
+illegal_num      000002F3 R  data 
+illegal_total    0000030A R  data 
+input            00000090 R  text 
+input_1          000000D4 R  text 
+input_2          00000104 R  text 
+input_restart    000000CC R  text 
+loop_cont        000009B4 R  text 
+loop_count       000003C8 R  data 
+loop_d           00000758 R  text 
+loop_d_2         000008B0 R  text 
+loop_d_cont      00000788 R  text 
+loop_d_cont_2    000008E0 R  text 
+loop_d_skip      00000784 R  text 
+loop_d_skip_2    000008DC R  text 
+loop_h           000003F0 R  text 
+loop_h_clear     00000440 R  text 
+loop_h_cont      0000041C R  text 
+loop_h_end       00000444 R  text 
+loop_in          00000198 R  text 
+loop_t           00000998 R  text 
+loop_v           00000528 R  text 
+loop_v_clear     00000584 R  text 
+loop_v_cont      00000560 R  text 
+loop_v_end       00000588 R  text 
+main             00000000 R  text 
+player1          00000272 R  data 
+player2          000002B1 R  data 
+quit_1           00000371 R  data 
+quit_2           00000381 R  data 
+read_in          00000130 R  text 
+row              000003B0 R  data 
+space            00000270 R  data 
+token_1          000002F0 R  data 
+token_2          000002F1 R  data 
+token_3          000002F2 R  data 
+top_error        00000268 R  text 
+victory_1        00000335 R  data 
+victory_2        00000346 R  data 
+victory_t        00000357 R  data 
+welcome          00000000 R  data 
+win_1            000009FC R  text 
+win_2            00000A10 R  text 
+win_d            000005E4 R  text 
+win_d_1          00000628 R  text 
+win_d_2          00000638 R  text 
+win_d_exit       000008F4 R  text 
+win_d_move_0     00000650 R  text 
+win_d_move_1     0000067C R  text 
+win_d_move_10    00000858 R  text 
+win_d_move_11    00000884 R  text 
+win_d_move_2     000006A8 R  text 
+win_d_move_3     000006D4 R  text 
+win_d_move_4     00000700 R  text 
+win_d_move_5     0000072C R  text 
+win_d_move_6     000007A8 R  text 
+win_d_move_7     000007D4 R  text 
+win_d_move_8     00000800 R  text 
+win_d_move_9     0000082C R  text 
+win_d_test       00000644 R  text 
+win_d_test_2     0000079C R  text 
+win_d_win        00000930 R  text 
+win_h            00000380 R  text 
+win_h_1          000003C4 R  text 
+win_h_2          000003D4 R  text 
+win_h_exit       00000464 R  text 
+win_h_test       000003E0 R  text 
+win_h_win        00000458 R  text 
+win_t            0000093C R  text 
+win_t_exit       000009C0 R  text 
+win_t_print      00000A24 R  text 
+win_v            000004A0 R  text 
+win_v_1          000004E4 R  text 
+win_v_2          000004F4 R  text 
+win_v_exit       000005A8 R  text 
+win_v_test       00000500 R  text 
+win_v_win        0000059C R  text 
